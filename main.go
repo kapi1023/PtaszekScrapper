@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"strconv"
+	"strings"
 )
 
 type ProductSkuData struct {
@@ -18,20 +19,31 @@ type ProductSkuData struct {
 	} `json:"results"`
 }
 
-type DataProduct struct {
+type ProductData struct {
+	Id             int    `json:"id"`
+	CategoryId     string `json:"CategoryId"`
+	BrandName      string `json:"brandName"`
 	CategoryName   string `json:"categoryName"`
 	DefaultVariant struct {
-		ID          int    `json:"id"`
-		BrandName   string `json:"name"`
+		Name        string `json:"name"`
+		Sku         string `json:"sku"`
+		ProductId   int    `json:"productId"`
 		Unit        string `json:"unit"`
 		PackageInfo struct {
+			PackageUnit string  `json:"packageUnit"`
 			PackageSize float64 `json:"packageSize"`
 		} `json:"packageInfo"`
+		ItemVolumeInfo string `json:"itemVolumeInfo"`
+		Media          struct {
+			Images    []string `json:"images"`
+			MainImage string   `json:"mainImage"`
+			ListImage string   `json:"listImage"`
+		}
 	} `json:"defaultVariant"`
 }
 
 func main() {
-	authCode := "Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJhdWQiOiIzMWMyZWQ3N2QyYTQ3YWM4YTAxZDc4MDMwZWFhMWEyYyIsImp0aSI6ImM5MDNmZGMwZjUzNDRiM2U1MjZlMWFlY2JjM2U5YTdkNmFmMmJiZDgxNWE2YTI1ZTBjZjljYWI3NmYzNTE2NjI4YjBmMThjMzgxMWY5ZTg2IiwiaWF0IjoxNjc2Mjg1NDY4LjM2MTgyOSwibmJmIjoxNjc2Mjg1NDY4LjM2MTgzNywiZXhwIjoxNjc2MzcxODY4LjMzODY3Miwic3ViIjoiYW5vbl9kNzQyMmE5Zi0yNDYwLTQ0MzEtOWVhYy1jODA5YTMzOGNkNzUiLCJzY29wZXMiOltdfQ.GqIFbLddGPQh_oBw5JwQ7riVkpBsW64eq5s6QxfC7029mdzjIao3JHlkGRpS3a3UAiWhcp3kopNhRpFi6suLI9XSxNBrpYibckYWDf-hDODdlNReoW7CZJs8EuXPtMxVWdw9HpjqKJZ-XHFf47Uocb1-9UWQR_JDVGQ0A1ayqxE_XN9HvrDdJmz4YYIcF_U0XRjFYY2P-l_6y-5fybN5WqUZeFx8SdXXH6ZuVC7QQeOEqUA_8xiuMFgrPFf_u_XIZ7cArnymk3UZ_7Ch2QWMHkHiq2nKGViq4eMreMbsI4RJIIPa4DPIupU0A3f5zXmVhGE4zgtPbyupwYzVOweEEA"
+	authCode := "Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJhdWQiOiIzMWMyZWQ3N2QyYTQ3YWM4YTAxZDc4MDMwZWFhMWEyYyIsImp0aSI6ImY4NDg1NTM2ZTcyNWYwYWJhYTA2YTViNWIzYzY2MjhjZWY1ODE2Y2I1ZDMyZDhhMzQxY2M3YzdlNGM1ZmFlN2M4ZDM5NGQ4YjhhZTMzMWVmIiwiaWF0IjoxNjc2NDkyOTE5LjEzNzg5OCwibmJmIjoxNjc2NDkyOTE5LjEzNzkwNSwiZXhwIjoxNjc2NTc5MzE5LjExODMzNiwic3ViIjoiYW5vbl82YTI1ZjUyYi01MWIyLTRkZGQtODFjNC00ZDM2ODI3NzJiNWUiLCJzY29wZXMiOltdfQ.qKRGlJfuJXLUsciguhsJeuD-GqXMVAQsXm5PpW5wntBqpyqlwvsT2efdic0N7v0gymLrz6GAPK7rzaqzTTDFoZJwxVKP3hnBIIDJV0gLC0JEVabHDtUy_JwQSs7LUAZtLb_wUlvowkJpVR3ZKyHBKBF0rEXWRQ9T2IP8wXuYs0GtZVLGcBJmeqTtLoM2cLrI5Ddkx_AfLAhYVJJxG72TKIqGQbGU-LQ3vpoaDM6ewsEJIl4O8jvCCJpQJJe9Y8Iv05_EaBYJhtL4jh-OQRfTXgqG65IoJ0IcOq1Bq7TQd_9SrTSonQeRgVSyxuYqX23Y8UOWedG9TpFyfQIBwlrvMg"
 	file, err := os.Open("categorieId.csv")
 	if err != nil {
 		fmt.Println("Nie udało się otworzyć pliku")
@@ -96,7 +108,7 @@ func getProductData(authCode string) {
 			fmt.Println(error)
 		}
 		res.Body.Close()
-		var dataProductStruct DataProduct
+		var productDataStruct ProductData
 		file, err := os.OpenFile("products_data.csv", os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0644)
 		if err != nil {
 			fmt.Println(err)
@@ -106,20 +118,33 @@ func getProductData(authCode string) {
 
 		writer := csv.NewWriter(file)
 
-		err = json.Unmarshal([]byte(body), &dataProductStruct)
+		err = json.Unmarshal([]byte(body), &productDataStruct)
 		if err != nil {
 			fmt.Println("Error unmarshaling JSON:", err)
 			return
 		}
-		fmt.Println("BrandName: ", dataProductStruct.DefaultVariant.BrandName, "PackageSize: ", dataProductStruct.DefaultVariant.PackageInfo.PackageSize, "Unit: ", dataProductStruct.DefaultVariant.Unit)
+		images := ""
+		fmt.Println("BrandName: ", productDataStruct.BrandName, "PackageSize: ", productDataStruct.DefaultVariant.PackageInfo.PackageSize, "Unit: ", productDataStruct.DefaultVariant.Unit)
+		for _, image := range productDataStruct.DefaultVariant.Media.Images {
 
-		brandName := dataProductStruct.DefaultVariant.BrandName
-		categoryName := dataProductStruct.CategoryName
-		packageSize := dataProductStruct.DefaultVariant.PackageInfo.PackageSize
-		unit := dataProductStruct.DefaultVariant.Unit
-
+			images += image + ","
+		}
+		images = strings.TrimSuffix(images, ",")
 		err = writer.Write([]string{
-			brandName, categoryName, strconv.FormatFloat(packageSize, 'f', -1, 64), unit,
+			strconv.Itoa(productDataStruct.Id),
+			productDataStruct.CategoryId,
+			productDataStruct.BrandName,
+			productDataStruct.CategoryName,
+			productDataStruct.DefaultVariant.Name,
+			productDataStruct.DefaultVariant.Sku,
+			strconv.Itoa(productDataStruct.DefaultVariant.ProductId),
+			productDataStruct.DefaultVariant.Unit,
+			productDataStruct.DefaultVariant.PackageInfo.PackageUnit,
+			strconv.FormatFloat(productDataStruct.DefaultVariant.PackageInfo.PackageSize, 'f', -1, 64),
+			productDataStruct.DefaultVariant.ItemVolumeInfo,
+			images,
+			productDataStruct.DefaultVariant.Media.MainImage,
+			productDataStruct.DefaultVariant.Media.ListImage,
 		})
 		if err != nil {
 			panic(err)

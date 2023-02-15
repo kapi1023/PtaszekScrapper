@@ -1,0 +1,20 @@
+id
+categorieId
+brandName
+defaultVariant{
+    id
+	name
+	sku
+	productId
+	Unit
+	packageInfo{
+		packageUnit
+		packageSize
+	}
+	itemVolumeInfo
+	media{
+		images[]
+		mainImage
+		listImage
+	}
+}
