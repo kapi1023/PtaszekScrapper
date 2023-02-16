@@ -18,3 +18,8 @@ defaultVariant{
 		listImage
 	}
 }
+
+"Id","CategoryId","BrandName","CategoryName","DefaultVariant_Name","DefaultVariant_Sku","DefaultVariant_ProductId","DefaultVariant_Unit","DefaultVariant_PackageInfo_PackageUnit","DefaultVariant_PackageInfo_PackageSize","DefaultVariant_ItemVolumeInfo","DefaultVariant_Media_Images","DefaultVariant_Media_MainImage","DefaultVariant_Media_ListImage"
+
+
+
